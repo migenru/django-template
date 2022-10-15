@@ -1,0 +1,28 @@
+version: '3.4'
+
+services:
+  backend:
+    build:
+      context: .
+      target: dev
+    volumes:
+      - ./src:/src
+    working_dir: /src
+    env_file:
+      - ./src/app/.env
+    ports:
+      - "8000:8000"
+    entrypoint: ./entrypoint.sh
+    depends_on:
+      - postgres
+    command: python manage.py runserver 0.0.0.0:8000
+
+  postgres:
+    image: postgres:12.6-alpine
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    env_file:
+      - ./src/app/.env
+
+volumes:
+  postgres-data: {}

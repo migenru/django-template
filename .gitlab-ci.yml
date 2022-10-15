@@ -1,0 +1,5 @@
+stages:
+  - remove
+  - build
+  - push
+  - deploy
