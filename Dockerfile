@@ -1,37 +1,24 @@
-FROM python:3.10.3-slim-bullseye AS base
-
-RUN apt-get update && apt-get install -y gettext
+FROM python:3.9.9-slim-bullseye AS base
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONFAULTHANDLER=1
+    PYTHONFAULTHANDLER=1 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
 
+FROM base AS python-deps
 
-FROM base AS builder
-
+# Install pipenv and compilation dependencies
+RUN apt-get update && apt-get install -y gettext && apt-get install -y --no-install-recommends gcc
 RUN pip install --upgrade pip
 
-RUN pip install pipenv
+# Install python dependencies in /.venv
+COPY /src/requirements.txt /
+RUN pip install -r ./requirements.txt
 
 WORKDIR /src
 COPY /src /src
 
-COPY Pipfile Pipfile.lock ./
+RUN chmod +x ./entrypoint.sh
 
-RUN pipenv install --system --deploy --ignore-pipfile
-
-
-ENV _UWSGI_VERSION 2.0.19
-
-RUN wget -O uwsgi-${_UWSGI_VERSION}.tar.gz https://github.com/unbit/uwsgi/archive/${_UWSGI_VERSION}.tar.gz \
-    && tar zxvf uwsgi-*.tar.gz \
-    && UWSGI_BIN_NAME=/usr/local/bin/uwsgi make -C uwsgi-${_UWSGI_VERSION} \
-    && rm -Rf uwsgi-*
-
-RUN ls
-RUN chmod 777 ./entrypoint.sh
-
-CMD uwsgi --master --http :8000 --module app.wsgi --workers 2 --threads 2 --harakiri 25 --max-requests 1000 --log-x-forwarded-for --buffer-size 32000
-
-
-FROM builder AS dev
+FROM python-deps AS dev
