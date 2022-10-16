@@ -1,6 +1,8 @@
 import os.path
+from pathlib import Path
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT_DIR = Path(__file__).resolve().parent.parent
 
 ROOT_URLCONF = 'app.urls'
 
